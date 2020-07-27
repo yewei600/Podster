@@ -6,6 +6,7 @@ package com.ericwei.podster.ui
 
 import android.app.SearchManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -21,12 +22,12 @@ class PodcastActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_podcast)
+    }
 
-        val itunesService = ItunesService.instance
-        val itunesRepo = ItunesRepo(itunesService)
-        itunesRepo.searchByTerm("Android developer") {
-            Log.i(TAG, "Results = $it")
-        }
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent!!)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -37,5 +38,20 @@ class PodcastActivity : AppCompatActivity() {
         val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
         searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
         return true
+    }
+
+    private fun handleIntent(intent: Intent) {
+        if (Intent.ACTION_SEARCH == intent.action) {
+            val query = intent.getStringExtra(SearchManager.QUERY) ?: return
+            performSearch(query)
+        }
+    }
+
+    private fun performSearch(term: String) {
+        val itunesService = ItunesService.instance
+        val itunesRepo = ItunesRepo(itunesService)
+        itunesRepo.searchByTerm(term) {
+            Log.i(TAG, "Results = $it")
+        }
     }
 }
