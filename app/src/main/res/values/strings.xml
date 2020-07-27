@@ -1,3 +1,9 @@
+<!--
+  ~ Copyright (c) 2020 Eric Wei. All rights reserved.
+  -->
+
 <resources>
     <string name="app_name">Podster</string>
+    <string name="search_hint">Enter podcast search</string>
+    <string name="search">Search</string>
 </resources>
