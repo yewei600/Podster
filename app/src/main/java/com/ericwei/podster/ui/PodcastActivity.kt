@@ -38,10 +38,10 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_podcast)
         setSupportActionBar(toolbar)
-        searchViewModel.iTunesRepo = ItunesRepo(ItunesService.instance)
-        podcastViewModel.podcastRepo = PodcastRepo()
+        setupViewModels()
         updateControls()
         handleIntent(intent)
+        addBackStackListener()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -59,6 +59,9 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
         searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
         if (podcastRecyclerView.visibility == View.INVISIBLE) {
             searchMenuItem.isVisible = false
+        }
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            podcastRecyclerView.visibility = View.INVISIBLE
         }
         return true
     }
@@ -81,6 +84,11 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
 
     private fun showProgressBar(visible: Boolean) {
         progressBar.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+    }
+
+    private fun setupViewModels() {
+        searchViewModel.iTunesRepo = ItunesRepo(ItunesService.instance)
+        podcastViewModel.podcastRepo = PodcastRepo()
     }
 
     private fun updateControls() {
@@ -121,6 +129,14 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
             .setMessage(message)
             .setPositiveButton(getString(R.string.ok_button), null)
             .create().show()
+    }
+
+    private fun addBackStackListener() {
+        supportFragmentManager.addOnBackStackChangedListener {
+            if (supportFragmentManager.backStackEntryCount == 0) {
+                podcastRecyclerView.visibility = View.VISIBLE
+            }
+        }
     }
 
     override fun onShowDetails(podcastSummaryViewData: PodcastSummaryViewData) {
