@@ -21,6 +21,7 @@ import com.ericwei.podster.R
 import com.ericwei.podster.adapter.PodcastListAdapter
 import com.ericwei.podster.repository.ItunesRepo
 import com.ericwei.podster.repository.PodcastRepo
+import com.ericwei.podster.service.FeedService
 import com.ericwei.podster.service.ItunesService
 import com.ericwei.podster.viewmodel.PodcastSummaryViewData
 import com.ericwei.podster.viewmodel.PodcastViewModel
@@ -88,7 +89,7 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
 
     private fun setupViewModels() {
         searchViewModel.iTunesRepo = ItunesRepo(ItunesService.instance)
-        podcastViewModel.podcastRepo = PodcastRepo()
+        podcastViewModel.podcastRepo = PodcastRepo(FeedService.instance)
     }
 
     private fun updateControls() {
