@@ -10,6 +10,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.ericwei.podster.R
+import com.ericwei.podster.util.DateUtils
+import com.ericwei.podster.util.HtmlUtils
 import com.ericwei.podster.viewmodel.EpisodeViewData
 import kotlinx.android.synthetic.main.episode_item.view.*
 
@@ -40,10 +42,11 @@ class EpisodeListAdapter(
         val episodeView = episodeViewList[position]
         holder.episodeViewData = episodeView
         holder.titleTextView.text = episodeView.title
-        holder.descTextView.text = episodeView.description
+        holder.descTextView.text = HtmlUtils.htmlToSpannable(episodeView.description ?: "")
         holder.durationTextView.text = episodeView.duration
-        holder.releaseDateTextView.text =
-            episodeView.releaseDate.toString()
+        holder.releaseDateTextView.text = episodeView.releaseDate?.let {
+            DateUtils.dateToShortDate(it)
+        }
     }
 
     override fun getItemCount(): Int {
