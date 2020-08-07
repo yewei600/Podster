@@ -4,6 +4,8 @@
 
 package com.ericwei.podster.repository
 
+import androidx.lifecycle.LiveData
+import com.ericwei.podster.db.PodcastDao
 import com.ericwei.podster.model.Episode
 import com.ericwei.podster.model.Podcast
 import com.ericwei.podster.service.FeedService
@@ -13,7 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-class PodcastRepo(private var feedService: FeedService) {
+class PodcastRepo(
+    private var feedService: FeedService,
+    private var podcastDao: PodcastDao
+) {
     fun getPodcast(feedUrl: String, callback: (Podcast?) -> Unit) {
         feedService.getFeed(feedUrl) { feedResponse ->
             var podcast: Podcast? = null
@@ -24,6 +29,20 @@ class PodcastRepo(private var feedService: FeedService) {
                 callback(podcast)
             }
         }
+    }
+
+    fun save(podcast: Podcast) {
+        GlobalScope.launch {
+            val podcastId = podcastDao.insertPodcast(podcast)
+            for (episode in podcast.episodes) {
+                episode.podcastId = podcastId
+                podcastDao.insertEpisode(episode)
+            }
+        }
+    }
+
+    fun getAll(): LiveData<List<Podcast>> {
+        return podcastDao.loadPodcasts()
     }
 
     private fun rssResponseToPodcast(

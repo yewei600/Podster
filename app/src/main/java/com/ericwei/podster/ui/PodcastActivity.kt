@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ericwei.podster.R
 import com.ericwei.podster.adapter.PodcastListAdapter
+import com.ericwei.podster.db.PodPlayDatabase
 import com.ericwei.podster.repository.ItunesRepo
 import com.ericwei.podster.repository.PodcastRepo
 import com.ericwei.podster.service.FeedService
@@ -89,7 +90,10 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
 
     private fun setupViewModels() {
         searchViewModel.iTunesRepo = ItunesRepo(ItunesService.instance)
-        podcastViewModel.podcastRepo = PodcastRepo(FeedService.instance)
+        podcastViewModel.podcastRepo = PodcastRepo(
+            FeedService.instance,
+            PodPlayDatabase.getInstance(this).podcastDao()
+        )
     }
 
     private fun updateControls() {
