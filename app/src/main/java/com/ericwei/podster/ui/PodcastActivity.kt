@@ -15,6 +15,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ericwei.podster.R
@@ -29,7 +30,9 @@ import com.ericwei.podster.viewmodel.PodcastViewModel
 import com.ericwei.podster.viewmodel.SearchViewModel
 import kotlinx.android.synthetic.main.activity_podcast.*
 
-class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapterListener {
+class PodcastActivity : AppCompatActivity(),
+    PodcastListAdapter.PodcastListAdapterListener,
+    PodcastDetailsFragment.OnPodcastDetailsListener {
     private val TAG = PodcastActivity::class.simpleName
     private val searchViewModel by viewModels<SearchViewModel>()
     private val podcastViewModel by viewModels<PodcastViewModel>()
@@ -42,6 +45,7 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
         setSupportActionBar(toolbar)
         setupViewModels()
         updateControls()
+        setupPodcastListView()
         handleIntent(intent)
         addBackStackListener()
     }
@@ -66,6 +70,24 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
             podcastRecyclerView.visibility = View.INVISIBLE
         }
         return true
+    }
+
+    override fun onShowDetails(podcastSummaryViewData: PodcastSummaryViewData) {
+        val feedUrl = podcastSummaryViewData.feedUrl ?: return
+        showProgressBar(true)
+        podcastViewModel.getPodcast(podcastSummaryViewData) {
+            showProgressBar(false)
+            if (it != null) {
+                showDetailsFragment()
+            } else {
+                showError("Error loading feed $feedUrl")
+            }
+        }
+    }
+
+    override fun onSubscribe() {
+        podcastViewModel.saveActivePodcast()
+        supportFragmentManager.popBackStack()
     }
 
     private fun handleIntent(intent: Intent) {
@@ -108,6 +130,19 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
         podcastRecyclerView.adapter = podcastListAdapter
     }
 
+    private fun setupPodcastListView() {
+        podcastViewModel.getPodcasts()?.observe(this, Observer {
+            if (it != null) showSubscribedPodcasts()
+        })
+    }
+
+    private fun showSubscribedPodcasts() {
+        podcastViewModel.getPodcasts()?.value?.let { podcasts ->
+            toolbar.title = getString(R.string.subscribed_podcasts)
+            podcastListAdapter.setSearchData(podcasts)
+        }
+    }
+
     private fun createPodcastDetailsFragment(): PodcastDetailsFragment {
         var podcastDetailsFragment = supportFragmentManager
             .findFragmentByTag(TAG_DETAILS_FRAGMENT) as
@@ -140,19 +175,6 @@ class PodcastActivity : AppCompatActivity(), PodcastListAdapter.PodcastListAdapt
         supportFragmentManager.addOnBackStackChangedListener {
             if (supportFragmentManager.backStackEntryCount == 0) {
                 podcastRecyclerView.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    override fun onShowDetails(podcastSummaryViewData: PodcastSummaryViewData) {
-        val feedUrl = podcastSummaryViewData.feedUrl ?: return
-        showProgressBar(true)
-        podcastViewModel.getPodcast(podcastSummaryViewData) {
-            showProgressBar(false)
-            if (it != null) {
-                showDetailsFragment()
-            } else {
-                showError("Error loading feed $feedUrl")
             }
         }
     }
