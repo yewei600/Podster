@@ -22,11 +22,13 @@ class PodcastDetailsFragment : Fragment() {
 
     interface OnPodcastDetailsListener {
         fun onSubscribe()
+        fun onUnsubscribe()
     }
 
     private val podcastViewModel: PodcastViewModel by activityViewModels()
     private lateinit var episodeListAdapter: EpisodeListAdapter
     private var listener: OnPodcastDetailsListener? = null
+    private var menuItem: MenuItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +51,8 @@ class PodcastDetailsFragment : Fragment() {
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.menu_details, menu)
+        menuItem = menu.findItem(R.id.menu_feed_action)
+        updateMenuItem()
     }
 
     override fun onAttach(context: Context) {
@@ -64,7 +68,11 @@ class PodcastDetailsFragment : Fragment() {
         return when (item.itemId) {
             R.id.menu_feed_action -> {
                 podcastViewModel.activePodcastViewData?.feedUrl?.let {
-                    listener?.onSubscribe()
+                    if (podcastViewModel.activePodcastViewData?.subscribed!!) {
+                        listener?.onUnsubscribe()
+                    } else {
+                        listener?.onSubscribe()
+                    }
                 }
                 true
             }
@@ -95,6 +103,12 @@ class PodcastDetailsFragment : Fragment() {
             podcastViewModel.activePodcastViewData?.episodes
         )
         episodeRecyclerView.adapter = episodeListAdapter
+    }
+
+    private fun updateMenuItem() {
+        val viewData = podcastViewModel.activePodcastViewData ?: return
+        menuItem?.title = if (viewData.subscribed) getString(R.string.unsubscribe) else
+            getString(R.string.subscribe)
     }
 
     companion object {

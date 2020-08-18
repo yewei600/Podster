@@ -20,13 +20,25 @@ class PodcastRepo(
     private var podcastDao: PodcastDao
 ) {
     fun getPodcast(feedUrl: String, callback: (Podcast?) -> Unit) {
-        feedService.getFeed(feedUrl) { feedResponse ->
-            var podcast: Podcast? = null
-            if (feedResponse != null) {
-                podcast = rssResponseToPodcast(feedUrl, "", feedResponse)
-            }
-            GlobalScope.launch(Dispatchers.Main) {
-                callback(podcast)
+        GlobalScope.launch {
+            val podcast = podcastDao.loadPodcast(feedUrl)
+            if (podcast != null) {
+                podcast.id?.let {
+                    podcast.episodes = podcastDao.loadEpisodes(it)
+                    GlobalScope.launch(Dispatchers.Main) {
+                        callback(podcast)
+                    }
+                }
+            } else {
+                feedService.getFeed(feedUrl) { feedResponse ->
+                    var podcast: Podcast? = null
+                    if (feedResponse != null) {
+                        podcast = rssResponseToPodcast(feedUrl, "", feedResponse)
+                    }
+                    GlobalScope.launch(Dispatchers.Main) {
+                        callback(podcast)
+                    }
+                }
             }
         }
     }
@@ -38,6 +50,12 @@ class PodcastRepo(
                 episode.podcastId = podcastId
                 podcastDao.insertEpisode(episode)
             }
+        }
+    }
+
+    fun delete(podcast: Podcast) {
+        GlobalScope.launch {
+            podcastDao.deletePodcast(podcast)
         }
     }
 
