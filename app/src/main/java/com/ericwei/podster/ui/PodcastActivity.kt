@@ -18,6 +18,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.*
 import com.ericwei.podster.R
 import com.ericwei.podster.adapter.PodcastListAdapter
 import com.ericwei.podster.db.PodPlayDatabase
@@ -28,7 +29,9 @@ import com.ericwei.podster.service.ItunesService
 import com.ericwei.podster.viewmodel.PodcastSummaryViewData
 import com.ericwei.podster.viewmodel.PodcastViewModel
 import com.ericwei.podster.viewmodel.SearchViewModel
+import com.ericwei.podster.worker.EpisodeUpdateWorker
 import kotlinx.android.synthetic.main.activity_podcast.*
+import java.util.concurrent.TimeUnit
 
 class PodcastActivity : AppCompatActivity(),
     PodcastListAdapter.PodcastListAdapterListener,
@@ -48,6 +51,7 @@ class PodcastActivity : AppCompatActivity(),
         setupPodcastListView()
         handleIntent(intent)
         addBackStackListener()
+        scheduleJobs()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -194,7 +198,24 @@ class PodcastActivity : AppCompatActivity(),
         }
     }
 
+    private fun scheduleJobs() {
+        val constraints: Constraints = Constraints.Builder().apply {
+            setRequiredNetworkType(NetworkType.CONNECTED)
+            setRequiresCharging(true)
+        }.build()
+        val request = PeriodicWorkRequestBuilder<EpisodeUpdateWorker>(
+            1, TimeUnit.HOURS
+        )
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            TAG_EPISODE_UPDATE_JOB,
+            ExistingPeriodicWorkPolicy.REPLACE, request
+        )
+    }
+
     companion object {
         private const val TAG_DETAILS_FRAGMENT = "DetailsFragment"
+        private const val TAG_EPISODE_UPDATE_JOB = "com.ericwei.podster.episodes"
     }
 }
