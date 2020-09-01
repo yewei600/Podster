@@ -114,6 +114,14 @@ class PodcastActivity : AppCompatActivity(),
             val query = intent.getStringExtra(SearchManager.QUERY) ?: return
             performSearch(query)
         }
+        val podcastFeedUrl = intent.getStringExtra(EpisodeUpdateWorker.EXTRA_FEED_URL)
+        if (podcastFeedUrl != null) {
+            podcastViewModel.setActivePodcast(podcastFeedUrl) {
+                it?.let { podcastSummaryView ->
+                    onShowDetails(podcastSummaryView)
+                }
+            }
+        }
     }
 
     private fun performSearch(term: String) {

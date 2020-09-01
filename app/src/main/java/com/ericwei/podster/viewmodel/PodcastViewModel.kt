@@ -96,4 +96,17 @@ class PodcastViewModel(application: Application) : AndroidViewModel(application)
         }
         return livePodcastData
     }
+
+    fun setActivePodcast(feedUrl: String, callback: (PodcastSummaryViewData?) -> Unit) {
+        val repo = podcastRepo ?: return
+        repo.getPodcast(feedUrl) {
+            if (it == null) {
+                callback(null)
+            } else {
+                activePodcastViewData = podcastToPodcastView(it)
+                activePodcast = it
+                callback(podcastToSummaryView(it))
+            }
+        }
+    }
 }
