@@ -4,7 +4,6 @@
 
 package com.ericwei.podster.service
 
-import android.util.Log
 import com.ericwei.podster.util.DateUtils
 import okhttp3.*
 import org.w3c.dom.Node
@@ -35,7 +34,6 @@ class RssFeedService : FeedService {
                         val rssFeedResponse = RssFeedResponse(episodes = mutableListOf())
                         domToRssFeedReponse(doc, rssFeedResponse)
                         callBack(rssFeedResponse)
-                        Log.d(TAG, rssFeedResponse.toString())
                     }
                 }
                 callBack(null)
