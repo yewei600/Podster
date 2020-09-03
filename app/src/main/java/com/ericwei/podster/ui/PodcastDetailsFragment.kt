@@ -6,6 +6,7 @@ package com.ericwei.podster.ui
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -23,10 +24,11 @@ import com.bumptech.glide.Glide
 import com.ericwei.podster.R
 import com.ericwei.podster.adapter.EpisodeListAdapter
 import com.ericwei.podster.service.PodplayMediaService
+import com.ericwei.podster.viewmodel.EpisodeViewData
 import com.ericwei.podster.viewmodel.PodcastViewModel
 import kotlinx.android.synthetic.main.fragment_podcast_details.*
 
-class PodcastDetailsFragment : Fragment() {
+class PodcastDetailsFragment : Fragment(), EpisodeListAdapter.EpisodeListAdapterListener {
 
     interface OnPodcastDetailsListener {
         fun onSubscribe()
@@ -113,6 +115,20 @@ class PodcastDetailsFragment : Fragment() {
         }
     }
 
+    override fun onSelectedEpisode(episodeViewData: EpisodeViewData) {
+        val fragmentActivity = activity as FragmentActivity
+        val controller = MediaControllerCompat.getMediaController(fragmentActivity)
+        if (controller.playbackState != null) {
+            if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
+                controller.transportControls.pause()
+            } else {
+                startPlaying(episodeViewData)
+            }
+        } else {
+            startPlaying(episodeViewData)
+        }
+    }
+
     private fun updateControls() {
         val viewData = podcastViewModel.activePodcastViewData ?: return
         feedTitleTextView.text = viewData.feedTitle
@@ -133,7 +149,7 @@ class PodcastDetailsFragment : Fragment() {
         )
         episodeRecyclerView.addItemDecoration(dividerItemDecoration)
         episodeListAdapter = EpisodeListAdapter(
-            podcastViewModel.activePodcastViewData?.episodes
+            podcastViewModel.activePodcastViewData?.episodes, this
         )
         episodeRecyclerView.adapter = episodeListAdapter
     }
@@ -159,6 +175,12 @@ class PodcastDetailsFragment : Fragment() {
             ComponentName(fragmentActivity, PodplayMediaService::class.java),
             MediaBrowserCallBacks(), null
         )
+    }
+
+    private fun startPlaying(episodesViewData: EpisodeViewData) {
+        val fragmentActivity = activity as FragmentActivity
+        val controller = MediaControllerCompat.getMediaController(fragmentActivity)
+        controller.transportControls.playFromUri(Uri.parse(episodesViewData.mediaUrl), null)
     }
 
     inner class MediaControllerCallback : MediaControllerCompat.Callback() {
