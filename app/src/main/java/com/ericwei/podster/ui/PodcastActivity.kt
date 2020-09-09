@@ -26,6 +26,7 @@ import com.ericwei.podster.repository.ItunesRepo
 import com.ericwei.podster.repository.PodcastRepo
 import com.ericwei.podster.service.FeedService
 import com.ericwei.podster.service.ItunesService
+import com.ericwei.podster.viewmodel.EpisodeViewData
 import com.ericwei.podster.viewmodel.PodcastSummaryViewData
 import com.ericwei.podster.viewmodel.PodcastViewModel
 import com.ericwei.podster.viewmodel.SearchViewModel
@@ -109,6 +110,11 @@ class PodcastActivity : AppCompatActivity(),
         supportFragmentManager.popBackStack()
     }
 
+    override fun onShowEpisodePlayer(episodeViewData: EpisodeViewData) {
+        podcastViewModel.activeEpisodeViewData = episodeViewData
+        showPlayerFragment()
+    }
+
     private fun handleIntent(intent: Intent) {
         if (Intent.ACTION_SEARCH == intent.action) {
             val query = intent.getStringExtra(SearchManager.QUERY) ?: return
@@ -170,23 +176,32 @@ class PodcastActivity : AppCompatActivity(),
         }
     }
 
-    private fun createPodcastDetailsFragment(): PodcastDetailsFragment {
+    private fun showDetailsFragment() {
         var podcastDetailsFragment = supportFragmentManager
-            .findFragmentByTag(TAG_DETAILS_FRAGMENT) as
-                PodcastDetailsFragment?
+            .findFragmentByTag(TAG_DETAILS_FRAGMENT) as PodcastDetailsFragment?
         if (podcastDetailsFragment == null) {
             podcastDetailsFragment = PodcastDetailsFragment.newInstance()
         }
-        return podcastDetailsFragment
-    }
-
-    private fun showDetailsFragment() {
-        val podcastDetailsFragment = createPodcastDetailsFragment()
         supportFragmentManager.beginTransaction().add(
             R.id.podcastDetailsContainer, podcastDetailsFragment, TAG_DETAILS_FRAGMENT
         )
             .addToBackStack("DetailsFragment").commit()
 
+        podcastRecyclerView.visibility = View.INVISIBLE
+        searchMenuItem.isVisible = false
+    }
+
+    private fun showPlayerFragment() {
+        var episodePlayerFragment = supportFragmentManager
+            .findFragmentByTag(TAG_PLAYER_FRAGMENT) as EpisodePlayerFragment?
+        if (episodePlayerFragment == null) {
+            episodePlayerFragment = EpisodePlayerFragment.newInstance()
+        }
+        supportFragmentManager.beginTransaction().replace(
+            R.id.podcastDetailsContainer,
+            episodePlayerFragment,
+            TAG_PLAYER_FRAGMENT
+        ).addToBackStack("PlayerFragment").commit()
         podcastRecyclerView.visibility = View.INVISIBLE
         searchMenuItem.isVisible = false
     }
@@ -225,5 +240,6 @@ class PodcastActivity : AppCompatActivity(),
     companion object {
         private const val TAG_DETAILS_FRAGMENT = "DetailsFragment"
         private const val TAG_EPISODE_UPDATE_JOB = "com.ericwei.podster.episodes"
+        private const val TAG_PLAYER_FRAGMENT = "PlayerFragment"
     }
 }
