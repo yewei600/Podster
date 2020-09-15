@@ -6,6 +6,7 @@ package com.ericwei.podster.ui
 
 import android.content.ComponentName
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -21,6 +22,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
 import com.bumptech.glide.Glide
 import com.ericwei.podster.R
+import com.ericwei.podster.service.PodplayMediaCallback.Companion.CMD_CHANGESPEED
+import com.ericwei.podster.service.PodplayMediaCallback.Companion.CMD_EXTRA_SPEED
 import com.ericwei.podster.service.PodplayMediaService
 import com.ericwei.podster.util.HtmlUtils
 import com.ericwei.podster.viewmodel.EpisodeViewData
@@ -32,6 +35,7 @@ class EpisodePlayerFragment : Fragment() {
     private val podcastViewModel: PodcastViewModel by activityViewModels()
     private lateinit var mediaBrowser: MediaBrowserCompat
     private var mediaControllerCallback: MediaControllerCallback? = null
+    private var playerSpeed: Float = 1.0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +77,17 @@ class EpisodePlayerFragment : Fragment() {
         }
     }
 
+    private fun setupControls() {
+        playToggleButton.setOnClickListener { togglePlayPause() }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            speedButton.setOnClickListener {
+                changeSpeed()
+            }
+        } else {
+            speedButton.visibility = View.INVISIBLE
+        }
+    }
+
     private fun updateControls() {
         episodeTitleTextView.text = podcastViewModel.activeEpisodeViewData?.title
         val htmlDesc = podcastViewModel.activeEpisodeViewData?.description ?: ""
@@ -83,6 +98,7 @@ class EpisodePlayerFragment : Fragment() {
         Glide.with(fragmentActivity)
             .load(podcastViewModel.activePodcastViewData?.imageUrl)
             .into(episodeImageView)
+        speedButton.text = "$playerSpeed"
     }
 
     private fun startPlaying(episodeViewData: EpisodeViewData) {
@@ -127,13 +143,23 @@ class EpisodePlayerFragment : Fragment() {
         }
     }
 
-    private fun setupControls() {
-        playToggleButton.setOnClickListener { togglePlayPause() }
-    }
-
     private fun handleStateChange(state: Int) {
         val isPlaying = state == PlaybackStateCompat.STATE_PLAYING
         playToggleButton.isActivated = isPlaying
+    }
+
+    private fun changeSpeed() {
+        playerSpeed += 0.25f
+        if (playerSpeed > 2.0f) {
+            playerSpeed = 0.75f
+        }
+        val bundle = Bundle()
+        bundle.putFloat(CMD_EXTRA_SPEED, playerSpeed)
+        val fragmentActivity = activity as FragmentActivity
+        val controller =
+            MediaControllerCompat.getMediaController(fragmentActivity)
+        controller.sendCommand(CMD_CHANGESPEED, bundle, null)
+        speedButton.text = "${playerSpeed}x"
     }
 
     inner class MediaControllerCallback : MediaControllerCompat.Callback() {
