@@ -77,6 +77,17 @@ class PodplayMediaCallback(
         }
     }
 
+    override fun onSeekTo(pos: Long) {
+        super.onSeekTo(pos)
+        mediaPlayer?.seekTo(pos.toInt())
+        val playbackState: PlaybackStateCompat? = mediaSession.controller.playbackState
+        if (playbackState != null) {
+            setState(playbackState.state)
+        } else {
+            setState(PlaybackStateCompat.STATE_PAUSED)
+        }
+    }
+
     private fun setState(state: Int, newSpeed: Float? = null) {
         var position: Long = -1
         var speed = 1.0f
@@ -206,6 +217,10 @@ class PodplayMediaCallback(
                                     mediaExtras.getString(
                                         MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI
                                     )
+                                )
+                                .putLong(
+                                    MediaMetadataCompat.METADATA_KEY_DURATION,
+                                    mediaPlayer.duration.toLong()
                                 )
                                 .build()
                         )
