@@ -33,6 +33,7 @@ class PodplayMediaCallback(
     private var newMedia: Boolean = false
     private var mediaExtras: Bundle? = null
     private var focusRequest: AudioFocusRequest? = null
+    private var mediaNeedsPrepare: Boolean = false
     var listener: PodplayMediaListener? = null
 
     override fun onPlayFromUri(uri: Uri?, extras: Bundle?) {
@@ -186,6 +187,7 @@ class PodplayMediaCallback(
             mediaPlayer!!.setOnSeekCompleteListener {
                 setState(PlaybackStateCompat.STATE_PAUSED)
             }
+            mediaNeedsPrepare = true
         }
     }
 
@@ -194,9 +196,11 @@ class PodplayMediaCallback(
             newMedia = false
             mediaPlayer?.let { mediaPlayer ->
                 mediaUri?.let { mediaUri ->
-                    mediaPlayer.reset()
-                    mediaPlayer.setDataSource(context, mediaUri)
-                    mediaPlayer.prepare()
+                    if (mediaNeedsPrepare) {
+                        mediaPlayer.reset()
+                        mediaPlayer.setDataSource(context, mediaUri)
+                        mediaPlayer.prepare()
+                    }
                     mediaExtras?.let { mediaExtras ->
                         mediaSession.setMetadata(
                             MediaMetadataCompat.Builder()

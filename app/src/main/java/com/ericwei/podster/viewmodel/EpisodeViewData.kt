@@ -12,5 +12,6 @@ data class EpisodeViewData(
     var description: String? = "",
     var mediaUrl: String? = "",
     var releaseDate: Date? = null,
-    var duration: String? = ""
+    var duration: String? = "",
+    var isVideo: Boolean = false
 )
